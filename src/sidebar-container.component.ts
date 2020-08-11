@@ -4,34 +4,34 @@ import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
-  Inject,
   Input,
   OnChanges,
   OnDestroy,
   Output,
-  PLATFORM_ID,
   SimpleChanges
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 
 import { Sidebar } from './sidebar.component';
+import { isBrowser } from './utils';
 
 // Based on https://github.com/angular/material2/tree/master/src/lib/sidenav
 @Component({
   selector: 'ng-sidebar-container',
   template: `
     <div *ngIf="showBackdrop"
-      aria-hidden="true"
-      class="ng-sidebar__backdrop"
-      [ngClass]="backdropClass"
-      (click)="_onBackdropClicked()"></div>
+         aria-hidden="true"
+         class="ng-sidebar__backdrop"
+         [ngClass]="backdropClass"
+         [class.ng-sidebar__backdrop--animate]="_showBackdropAnimate"
+         (click)="_onBackdropClicked()">
+    </div>
 
     <ng-content select="ng-sidebar,[ng-sidebar]"></ng-content>
 
     <div class="ng-sidebar__content"
-      [class.ng-sidebar__content--animate]="animate"
-      [ngClass]="contentClass"
-      [ngStyle]="_getContentStyle()">
+         [class.ng-sidebar__content--animate]="animate"
+         [ngClass]="contentClass"
+         [ngStyle]="_getContentStyle()">
       <ng-content select="[ng-sidebar-content]"></ng-content>
     </div>
   `,
@@ -51,10 +51,16 @@ import { Sidebar } from './sidebar.component';
       bottom: 0;
       left: 0;
       right: 0;
-      background: #000;
-      opacity: 0.75;
+      background-color: rgba(0, 0, 0, 0.2);
+      -webkit-transition: background-color 100ms;
+      transition: background-color 100ms;
+      will-change: background-color;
       pointer-events: auto;
-      z-index: 1;
+      z-index: 99999998;
+    }
+
+    .ng-sidebar__backdrop--animate {
+      background-color: rgba(0, 0, 0, 0.2);
     }
 
     .ng-sidebar__content {
@@ -79,20 +85,20 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
 
   @Input() allowSidebarBackdropControl: boolean = true;
   @Input() showBackdrop: boolean = false;
+
   @Output() showBackdropChange = new EventEmitter<boolean>();
   @Output() onBackdropClicked = new EventEmitter<null>();
 
   @Input() contentClass: string;
   @Input() backdropClass: string;
-
+  _showBackdropAnimate: boolean = this.showBackdrop;
+  _animationTimer;
+  _animTimer = 1;
   private _sidebars: Array<Sidebar> = [];
-
   private _isBrowser: boolean;
 
-  constructor(
-    private _ref: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) platformId: Object) {
-    this._isBrowser = isPlatformBrowser(platformId);
+  constructor(private _ref: ChangeDetectorRef) {
+    this._isBrowser = isBrowser();
   }
 
   ngAfterContentInit(): void {
@@ -285,8 +291,26 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
       // Show backdrop if a single open sidebar has it set
       const hasOpen = this._sidebars.some(sidebar => sidebar.opened && sidebar.showBackdrop);
 
-      this.showBackdrop = hasOpen;
+      // this.showBackdrop = hasOpen;
       this.showBackdropChange.emit(hasOpen);
+
+      if (!this._animationTimer) {
+        if (hasOpen) {
+          this.showBackdrop = hasOpen;
+          this._animationTimer = setTimeout(() => {
+            this._showBackdropAnimate = hasOpen;
+            this._animationTimer = undefined;
+            this._animTimer = 10;
+          }, this._animTimer);
+        } else {
+          this._showBackdropAnimate = hasOpen;
+          this._animationTimer = setTimeout(() => {
+            this.showBackdrop = hasOpen;
+            this._animationTimer = undefined;
+            this._animTimer = 10;
+          }, this._animTimer);
+        }
+      }
     }
 
     setTimeout(() => {

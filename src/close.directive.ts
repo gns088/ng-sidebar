@@ -9,7 +9,8 @@ import { Sidebar } from './sidebar.component';
   }
 })
 export class CloseSidebar {
-  constructor(private _sidebar: Sidebar) {}
+  constructor(private _sidebar: Sidebar) {
+  }
 
   /** @internal */
   _onClick(): void {

@@ -1,12 +1,15 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { SidebarModule } from 'ng-sidebar';
 
+import { SidebarModule } from '../../../src';
 import { DemoComponent } from './demo.component';
+import { MyDemoComponent } from './my-demo.component';
+import { MyDemoDivComponent } from './my-demo-div.component';
 
 @NgModule({
-  declarations: [DemoComponent],
+  declarations: [DemoComponent, MyDemoComponent, MyDemoDivComponent],
   imports: [BrowserModule, SidebarModule.forRoot()],
-  bootstrap: [DemoComponent],
+  bootstrap: [MyDemoComponent]
 })
-export class DemoAppModule {}
+export class DemoAppModule {
+}
